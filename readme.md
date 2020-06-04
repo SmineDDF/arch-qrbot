@@ -47,4 +47,4 @@ curl --request POST --url https://api.telegram.org/bot<TELEGRAM_TOKEN>/setWebhoo
 where `<TELEGRAM_TOKEN>` is bot's token and `<LINK>` is the link to your endpoint (printed in terminal after deployment and has following form: `https://abcdefg123.execute-api.us-east-1.amazonaws.com/dev/qrbot`)
 
 #### disclaimer
-this code is nowhere near being production-ready, it's written just for a software architecture class assignment
+this code is nowhere near being production-ready, it's written as a software architecture class assignment
