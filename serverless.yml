@@ -1,0 +1,73 @@
+service: qrbot
+app: arch-qrbot
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  region: ${opt:region, self:provider.region}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment:
+    TELEGRAM_TOKEN: ${file(./tg_token.json):token}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 'arn:aws:dynamodb:*'
+
+functions:
+  qrbot:
+    handler: handler.qrbot
+    environment:
+      REDIRECT_URL: { "Fn::Join" : ["", [" https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.${self:custom.region}.amazonaws.com/${self:custom.stage}/qrbot-redirect" ] ]  }
+    events:
+      - http:
+          path: qrbot
+          method: post
+          cors: true
+  qrbot-redirect:
+    handler: handler.qrbotRedirect
+    events:
+      - http:
+          path: qrbot-redirect/{short}
+          method: get
+          cors: true
+          parameters:
+              paths:
+                short: true
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: shortToOriginalUrl
+        AttributeDefinitions:
+          - AttributeName: short
+            AttributeType: S
+        KeySchema:
+          - AttributeName: short
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    logTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: logQrVisit
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
