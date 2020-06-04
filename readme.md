@@ -2,7 +2,9 @@
 
 #### description
 serverless telegram bot running on serverless nodejs framework and aws
-bot creates qrcodes from text and links sent to it
+
+this bot creates qrcodes from text and links sent to it
+
 link hits are tracked and saved to aws dynamodb
 
 installation:
