@@ -41,37 +41,23 @@ functions:
           cors: true
           parameters:
               paths:
-                short: true
+                shortUrl: true
 
 resources:
   Resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: shortToOriginalUrl
+        TableName: shortToOriginal
         AttributeDefinitions:
-          - AttributeName: short
-            AttributeType: S
-          - AttributeName: trackingId
+          - AttributeName: shortUrl
             AttributeType: S
         KeySchema:
-          - AttributeName: short
+          - AttributeName: shortUrl
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        GlobalSecondaryIndexes:
-        - IndexName: trackingIdIndex
-          KeySchema:
-          - AttributeName: trackingId
-            KeyType: HASH
-          Projection:
-            NonKeyAttributes:
-            - short
-            ProjectionType: INCLUDE
-          ProvisionedThroughput:
-            ReadCapacityUnits: '1'
-            WriteCapacityUnits: '1'
     logTable:
       Type: AWS::DynamoDB::Table
       Properties:

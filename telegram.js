@@ -1,6 +1,6 @@
 const rp = require('request-promise');
 
-function sendTextToUser(chat_id, text) {
+function sendText(chat_id, text) {
   const options = {
     method: 'GET',
     uri: `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`,
@@ -13,20 +13,28 @@ function sendTextToUser(chat_id, text) {
   return rp(options);
 }
 
-function sendPhotoToUser(chat_id, photo) {
+function sendPhoto(chat_id, caption, photo) {
   const options = {
     method: 'GET',
     uri: `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendPhoto`,
     qs: {
       chat_id,
-      photo
+      photo,
+      caption
     }
   };
 
   return rp(options);
 }
 
+function sendMessage(chat_id, text, photo) {
+  if (! photo) {
+    return sendText(chat_id, text);
+  }
+
+  return sendPhoto(chat_id, text, photo)
+}
+
 module.exports = {
-  sendTextToUser,
-  sendPhotoToUser
+  sendMessage
 }

@@ -1,17 +1,17 @@
 const AWS = require('aws-sdk');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const shortid = require('shortid');
 
-function saveShortOriginalPair(short, original) {
-  if (!short || !original) {
+function saveShortOriginalPair(shortUrl, original, trackingId) {
+  if (!shortUrl || !original) {
     return Promise.reject();
   }
 
   return dynamoDB
     .put({
-      TableName: 'shortToOriginalUrl',
+      TableName: 'shortToOriginal',
       Item: {
-        short,
+        trackingId,
+        shortUrl,
         original,
         createdTimestamp: +(new Date())
       }
@@ -19,20 +19,18 @@ function saveShortOriginalPair(short, original) {
     .promise();
 }
 
-async function getShortOriginalPair(short) {
-  if (!short) {
+async function getShortOriginalPair(shortUrl) {
+  if (!shortUrl) {
     return Promise.reject();
   }
 
-  const params = {
-    TableName: 'shortToOriginalUrl',
-    Key: {
-      short
-    }
-  }
-
   const entry = await dynamoDB
-    .get(params)
+    .get({
+      TableName: 'shortToOriginal',
+      Key: {
+        shortUrl
+      }
+    })
     .promise();
 
   if (!entry || !entry.Item) {
@@ -42,8 +40,8 @@ async function getShortOriginalPair(short) {
   return entry.Item;
 }
 
-function logVisit(short, original) {
-  if (!short) {
+function logVisit(shortUrl, original, uid) {
+  if (!shortUrl) {
     return Promise.reject();
   }
 
@@ -51,8 +49,8 @@ function logVisit(short, original) {
     .put({
       TableName: 'logQrVisit',
       Item: {
-        uid: shortid.generate(),
-        short,
+        uid,
+        shortUrl,
         original,
         timestamp: +(new Date())
       }
@@ -60,8 +58,66 @@ function logVisit(short, original) {
     .promise();
 }
 
+async function deleteAllData(trackingId) {
+  if (!trackingId) {
+    return Promise.reject();
+  }
+
+  const { Items } = await dynamoDB.scan({
+    TableName: 'shortToOriginal',
+    ProjectionExpression: "trackingId, shortUrl",
+    FilterExpression: "trackingId = :trackingId",
+    ExpressionAttributeValues: {
+        ":trackingId": trackingId
+    }
+  })
+  .promise();
+
+  const { shortUrl } = (Items || [])[0] || {};
+
+  return dynamoDB.delete({
+    TableName: 'shortToOriginal',
+    Key: {
+      shortUrl
+    }
+  })
+  .promise();
+}
+
+async function getVisitsByTrackingId(trackingId) {
+  if (!trackingId) {
+    return Promise.reject();
+  }
+
+  const { Items } = await dynamoDB.scan({
+    TableName: 'shortToOriginal',
+    ProjectionExpression: "trackingId, shortUrl",
+    FilterExpression: "trackingId = :trackingId",
+    ExpressionAttributeValues: {
+        ":trackingId": trackingId
+    }
+  })
+  .promise();
+
+  const { shortUrl } = (Items || [])[0] || {};
+
+  const { Count } = await dynamoDB.scan({
+    TableName: 'logQrVisit',
+    ProjectionExpression: "shortUrl",
+    FilterExpression: "shortUrl = :shortUrl",
+    ExpressionAttributeValues: {
+        ":shortUrl": shortUrl
+    }
+  })
+  .promise();
+
+  return Count;
+}
+
 module.exports = {
   saveShortOriginalPair,
   getShortOriginalPair,
-  logVisit
+  logVisit,
+  deleteAllData,
+  getVisitsByTrackingId
 }
