@@ -9,6 +9,10 @@ function formatVisitData(visitData) {
 };
 
 async function handleDeleteCommand(trackingId) {  
+  if (! trackingId) {
+    return 'Provide a valid trackingId';
+  }
+
   try {
     await db.deleteAllData(trackingId);
     return `Visit data for trackingId ${trackingId} completely removed`;
@@ -18,6 +22,10 @@ async function handleDeleteCommand(trackingId) {
 }
 
 async function handleVisitsCommand(trackingId) {
+  if (! trackingId) {
+    return 'Provide a valid trackingId';
+  }
+
   try {
     const countOfVisits = await db.getVisitsByTrackingId(trackingId);
     return countOfVisits;
@@ -88,7 +96,7 @@ module.exports.qrbot = async event => {
       await telegram.sendMessage(
         chat.id, 
         `Direct link: ${redirectUrl} \n` +
-        `trackingId to access tracked data: ${trackingId}`,
+        `trackingId to access visit count: ${trackingId}`,
         stringQR
       );
     } catch {
